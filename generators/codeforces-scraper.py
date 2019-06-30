@@ -91,6 +91,6 @@ def build_codebook(user, root):
         else:
             print("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
 
-root = "/home/akrish13/Documents"
+root = "/home/akrish13/Documents/codebook"
 user = "MystikNinja"
 build_codebook(user, root)
