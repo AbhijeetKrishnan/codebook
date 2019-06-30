@@ -9,6 +9,7 @@ variety of platforms
 - [] Add generators for Codechef, HackerRank, HackerEarth
 - [] Add better error handling in case requests get rate limited
 - [] Add better logging
+- [] Add progress bar/completion statistics
 
 ## Generators
 
