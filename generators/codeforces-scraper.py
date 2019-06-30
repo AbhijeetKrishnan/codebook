@@ -42,12 +42,12 @@ def get_submission_code(submission_id, contest_id):
         soup = BeautifulSoup(response.text, 'html.parser')
         code_tag = soup.find(id = 'program-source-text')
         if not code_tag:
-            raise Exception("Source code could not be found in response: %s" % response.text)
+            raise Exception("Source code could not be found for url: %s in response: %s" % (url, response.text))
         code = code_tag.string
         ext = code_tag['class'][1].split('-')[1]
         return code, ext
     else:
-        raise Exception("Submission code retrieval for %s -  %s ended in failure (status code = %d" % (submission_id, contest_id, response.status_code))
+        raise Exception("Submission code retrieval for url: %s ended in failure (status code = %d" % (url, response.status_code))
 
 # if file does not exist, save code with filename as
 # [index] - [problem_name].[ext] in folder [root]/Codeforces/[contest_name]/
@@ -70,7 +70,6 @@ def build_codebook(user, root):
     if contest_names:
         print("Successfully retrieved contest_names...")
     for submission in submission_list:
-        code, ext = get_submission_code(submission['id'], submission['contestId'])
 
         # Create contest folder
         try:
@@ -84,8 +83,9 @@ def build_codebook(user, root):
         filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
         if not os.path.isfile(filepath):
             fp = open(filepath, 'w')
-            fp.write(code)
+            code, ext = get_submission_code(submission['id'], submission['contestId'])
             print("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+            fp.write(code)
             fp.close()
         else:
             print("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
