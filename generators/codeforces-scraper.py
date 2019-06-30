@@ -79,7 +79,7 @@ def build_codebook(user, root):
             print("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
         
         # generate filename
-        filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], ext)
+        filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], 'cpp')
         filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
         if not os.path.isfile(filepath):
             fp = open(filepath, 'w')
@@ -89,6 +89,7 @@ def build_codebook(user, root):
             fp.close()
         else:
             print("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+        print("Codebook generation completed!")
 
 if __name__ == "__main__":
     root = "/home/akrish13/Documents/codebook"
