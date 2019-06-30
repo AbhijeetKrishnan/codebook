@@ -5,9 +5,6 @@ from bs4 import BeautifulSoup
 
 from ratelimit import limits, sleep_and_retry
 
-# TODO Add multithreading
-# could have a thread pool making requests
-# would need to ensure total requests by all threads is under 5 a second
 
 def get_submissions(user):
     res = []
@@ -44,6 +41,8 @@ def get_submission_code(submission_id, contest_id):
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         code_tag = soup.find(id = 'program-source-text')
+        if not code_tag:
+            raise Exception("Source code could not be found in response: %s" % response.text)
         code = code_tag.string
         ext = code_tag['class'][1].split('-')[1]
         return code, ext
@@ -91,6 +90,7 @@ def build_codebook(user, root):
         else:
             print("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
 
-root = "/home/akrish13/Documents/codebook"
-user = "MystikNinja"
-build_codebook(user, root)
+if __name__ == "__main__":
+    root = "/home/akrish13/Documents/codebook"
+    user = "MystikNinja"
+    build_codebook(user, root)
