@@ -8,6 +8,7 @@ variety of platforms
 - [] Add support for multithreaded API requests
 - [] Add generators for Codechef, HackerRank, HackerEarth
 - [] Add better error handling in case requests get rate limited
+- [] Add better logging
 
 ## Generators
 
