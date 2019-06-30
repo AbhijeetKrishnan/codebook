@@ -6,6 +6,22 @@ from bs4 import BeautifulSoup
 from ratelimit import limits, sleep_and_retry
 
 
+def detect_language(lang):
+    LANGS = {
+        'GNU C': 'c',
+        'GNU C++11': 'cpp',
+        'GNU C++14': 'cpp',
+        'GNU C++17': 'cpp',
+        'Kotlin': 'kt', 
+        'Python 3': 'py', 
+        'PyPy 3': 'py', 
+    }
+    if lang in LANGS:
+        return LANGS[lang]
+    else:
+        print("Detected unknown language: %s" % lang)
+        return 'unknown'
+
 def get_submissions(user):
     res = []
     url = "https://codeforces.com/api/user.status"
@@ -19,6 +35,8 @@ def get_submissions(user):
                 sub['contestId'] = submission['contestId']
                 sub['problemName'] = submission['problem']['name']
                 sub['problemIndex'] = submission['problem']['index']
+                sub['ext'] = detect_language(submission['programmingLanguage'])
+                sub['verdict'] = submission['verdict']
                 res.append(sub)
     return res
 
@@ -43,10 +61,7 @@ def get_submission_code(submission_id, contest_id):
         code_tag = soup.find(id = 'program-source-text')
         if not code_tag:
             raise Exception("Source code could not be found for url: %s in response: %s" % (url, response.text))
-        code = code_tag.string
-        print("Code_tag class: %s" % code_tag['class'])
-        ext = code_tag['class'][1].split('-')[1]
-        return code, ext
+        return code_tag.string
     else:
         raise Exception("Submission code retrieval for url: %s ended in failure (status code = %d" % (url, response.status_code))
 
@@ -82,12 +97,12 @@ def build_codebook(user, root):
             print("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
         
         # generate filename
-        filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], 'cpp')
+        filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], submission['ext'])
         filename = filename.replace('/', FORWARD_SLASH_REPLACEMENT)
         filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
         if not os.path.isfile(filepath):
             fp = open(filepath, 'w')
-            code, ext = get_submission_code(submission['id'], submission['contestId'])
+            code = get_submission_code(submission['id'], submission['contestId'])
             print("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
             fp.write(code)
             fp.close()
