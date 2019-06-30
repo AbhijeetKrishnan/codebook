@@ -44,6 +44,7 @@ def get_submission_code(submission_id, contest_id):
         if not code_tag:
             raise Exception("Source code could not be found for url: %s in response: %s" % (url, response.text))
         code = code_tag.string
+        print("Code_tag class: %s" % code_tag['class'])
         ext = code_tag['class'][1].split('-')[1]
         return code, ext
     else:
@@ -56,6 +57,8 @@ def get_submission_code(submission_id, contest_id):
 # save first submission with git commit of Add submission for [index] - [problem_name]
 # save subsequent submissions with git commit of Attempt bugfix
 def build_codebook(user, root):
+    FORWARD_SLASH_REPLACEMENT = '╱'
+    
     # create Codeforces folder in pwd
     try:
         os.chdir(root)
@@ -80,6 +83,7 @@ def build_codebook(user, root):
         
         # generate filename
         filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], 'cpp')
+        filename = filename.replace('/', FORWARD_SLASH_REPLACEMENT)
         filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
         if not os.path.isfile(filepath):
             fp = open(filepath, 'w')
@@ -89,7 +93,7 @@ def build_codebook(user, root):
             fp.close()
         else:
             print("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
-        print("Codebook generation completed!")
+    print("Codebook generation completed!")
 
 if __name__ == "__main__":
     root = "/home/akrish13/Documents/codebook"
