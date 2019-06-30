@@ -10,6 +10,7 @@ variety of platforms
 - [] Add better error handling in case requests get rate limited
 - [] Add better logging
 - [] Add progress bar/completion statistics
+- [] Add language detection using string in submission object
 
 ## Generators
 
