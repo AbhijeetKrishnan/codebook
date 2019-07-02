@@ -8,7 +8,7 @@ variety of platforms
 - [] Add support for multithreaded API requests
 - [] Add generators for Codechef, HackerRank, HackerEarth
 - [] Add better error handling in case requests get rate limited
-- [] Add better logging
+- [x] Add better logging
 - [] Add progress bar/completion statistics
 - [] Add git integration
 - [x] Add language detection using string in submission object
