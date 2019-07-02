@@ -1,10 +1,11 @@
+import logging
 import os
 
 import requests
 from bs4 import BeautifulSoup
-
 from ratelimit import limits, sleep_and_retry
 
+logging.basicConfig(level = logging.INFO, format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
 
 def detect_language(lang):
     LANGS = {
@@ -17,17 +18,23 @@ def detect_language(lang):
         'PyPy 3': 'py', 
     }
     if lang in LANGS:
+        logging.info("Detected language: %s" % LANGS[lang])
         return LANGS[lang]
     else:
-        print("Detected unknown language: %s" % lang)
+        logging.warning("Detected unknown language: %s" % lang)
         return 'unknown'
 
 def get_submissions(user):
     res = []
     url = "https://codeforces.com/api/user.status"
+    logging.info("Making request for user.status")
     response = requests.get(url, params = {'handle': user})
+    logging.debug("Returned status code %d" % response.status_code)
+
     if response.status_code == 200:
         json = response.json()
+        logging.debug("Returned status %s" % json['status'])
+
         if json['status'] == "OK":
             for submission in json['result']:
                 sub = {}
@@ -38,63 +45,84 @@ def get_submissions(user):
                 sub['ext'] = detect_language(submission['programmingLanguage'])
                 sub['verdict'] = submission['verdict']
                 res.append(sub)
+
+    logging.info("Retrieved all submissions for %s" % user)
     return res
 
 def get_contest_names():
     res = {}
     url = "http://codeforces.com/api/contest.list"
+    logging.info("Making request for contest.list")
     response = requests.get(url, params = {'gym': 'false'})
+    logging.debug("Returned status code %d" % response.status_code)
+
     if response.status_code == 200:
         json = response.json()
+        logging.debug("Returned status %s" % json['status'])
         if json['status'] == "OK":
             for contest in json['result']:
                 res[contest['id']] = contest['name']
+
+    logging.info("Retrieved contest list")
     return res
 
 @sleep_and_retry
 @limits(calls = 5, period = 1)
 def get_submission_code(submission_id, contest_id):
+    res = ""
     url = "https://codeforces.com/contest/%s/submission/%s" % (contest_id, submission_id)
+    logging.info("Making request for submission %d" % submission_id)
     response = requests.get(url)
+    logging.debug("Returned status code %d" % response.status_code)
+
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         code_tag = soup.find(id = 'program-source-text')
-        if not code_tag:
-            raise Exception("Source code could not be found for url: %s in response: %s" % (url, response.text))
-        return code_tag.string
-    else:
-        raise Exception("Submission code retrieval for url: %s ended in failure (status code = %d" % (url, response.status_code))
 
-# if file does not exist, save code with filename as
-# [index] - [problem_name].[ext] in folder [root]/Codeforces/[contest_name]/
-# else
+        if not code_tag:
+            logging.error("Source code could not be found for submission ID: %d. Request was most likely redirected by Codeforces." % (submission_id))
+        res = code_tag.string
+
+    return res
+
 # traverse submission list in reverse order (from oldest to newest)
 # save first submission with git commit of Add submission for [index] - [problem_name]
 # save subsequent submissions with git commit of Attempt bugfix
 def build_codebook(user, root):
     FORWARD_SLASH_REPLACEMENT = '╱'
     
+    logging.info("Building Codeforces codebook for %s in folder %s/Codeforces" % (user, root))
     # create Codeforces folder in pwd
     try:
+        logging.debug("Attempting to create %s/Codeforces folder" % root)
         os.chdir(root)
         os.mkdir('Codeforces')
-        print("Successfully created Codeforces folder...")
+        logging.info("Successfully created Codeforces folder")
     except FileExistsError:
-        print("Failed to create Codeforces folder!...")
-    submission_list = get_submissions(user)
-    if submission_list:
-        print("Successfully retrieved submission list...")
+        logging.warning("Failed to create Codeforces folder since it already exists")
+
+    logging.info("Retrieving submissions list for %s" % user)
+    submissions_list = get_submissions(user)
+    if submissions_list:
+        logging.info("Successfully retrieved submissions list")
+    else:
+        logging.critical("Failed to retrieve submissions list")
+
+    logging.info("Retrieving contest names")
     contest_names = get_contest_names()
     if contest_names:
-        print("Successfully retrieved contest_names...")
-    for submission in submission_list:
+        logging.info("Successfully retrieved contest names")
+    else:
+        logging.critical("Failed to retrieve contest names")
 
+    for submission in submissions_list:
         # Create contest folder
         try:
+            logging.debug("Creating folder for contest %s" % contest_names[submission['contestId']])
             os.mkdir(os.path.join('Codeforces', contest_names[submission['contestId']]))
-            print("Successfully created folder for contest", contest_names[submission['contestId']])
+            logging.info("Successfully created folder for contest %s" % contest_names[submission['contestId']])
         except FileExistsError:
-            print("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
+            logging.warning("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
         
         # generate filename
         filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], submission['ext'])
@@ -102,13 +130,14 @@ def build_codebook(user, root):
         filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
         if not os.path.isfile(filepath):
             fp = open(filepath, 'w')
+            logging.debug("Retrieving code for submission %d" % submission['id'])
             code = get_submission_code(submission['id'], submission['contestId'])
-            print("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+            logging.info("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
             fp.write(code)
             fp.close()
         else:
-            print("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
-    print("Codebook generation completed!")
+            logging.warning("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+    logging.info("Codebook generation completed!")
 
 if __name__ == "__main__":
     root = "/home/akrish13/Documents/codebook"
