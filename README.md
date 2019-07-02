@@ -9,7 +9,7 @@ variety of platforms
 - [] Add generators for Codechef, HackerRank, HackerEarth
 - [] Add better error handling in case requests get rate limited
 - [x] Add better logging
-- [] Add progress bar/completion statistics
+- [x] Add progress bar/completion statistics
 - [] Add git integration
 - [x] Add language detection using string in submission object
 

@@ -1,11 +1,13 @@
 import logging
 import os
+import time
 
 import requests
 from bs4 import BeautifulSoup
 from ratelimit import limits, sleep_and_retry
+from tqdm import tqdm
 
-logging.basicConfig(level = logging.INFO, format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
+logging.basicConfig(level = logging.ERROR, format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
 
 def detect_language(lang):
     LANGS = {
@@ -115,7 +117,7 @@ def build_codebook(user, root):
     else:
         logging.critical("Failed to retrieve contest names")
 
-    for submission in submissions_list:
+    for submission in tqdm(submissions_list):
         # Create contest folder
         try:
             logging.debug("Creating folder for contest %s" % contest_names[submission['contestId']])
