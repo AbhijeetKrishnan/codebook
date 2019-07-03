@@ -92,6 +92,7 @@ def get_submission_code(submission_id, contest_id):
 # save subsequent submissions with git commit of Attempt bugfix
 def build_codebook(user, root):
     FORWARD_SLASH_REPLACEMENT = '╱'
+    start_time = time.process_time_ns()
     
     logging.info("Building Codeforces codebook for %s in folder %s/Codeforces" % (user, root))
     # create Codeforces folder in pwd
@@ -139,7 +140,8 @@ def build_codebook(user, root):
             fp.close()
         else:
             logging.warning("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
-    logging.info("Codebook generation completed!")
+    stop_time = time.process_time_ns()
+    logging.info("Codebook generation completed in %dns" % (stop_time - start_time))
 
 if __name__ == "__main__":
     root = "/home/akrish13/Documents/codebook"
