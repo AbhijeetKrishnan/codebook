@@ -1,3 +1,4 @@
+import concurrent.futures
 import logging
 import os
 import time
@@ -7,7 +8,6 @@ from bs4 import BeautifulSoup
 from ratelimit import limits, sleep_and_retry
 from tqdm import tqdm
 
-logging.basicConfig(level = logging.ERROR, format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
 
 def detect_language(lang):
     LANGS = {
@@ -87,10 +87,38 @@ def get_submission_code(submission_id, contest_id):
 
     return res
 
+FORWARD_SLASH_REPLACEMENT = ''
+contest_names = {}
+submissions_list = []
+
+def thread_func(submission):
+    # Create contest folder
+    try:
+        logging.debug("Creating folder for contest %s" % contest_names[submission['contestId']])
+        os.mkdir(os.path.join('Codeforces', contest_names[submission['contestId']]))
+        logging.info("Successfully created folder for contest %s" % contest_names[submission['contestId']])
+    except FileExistsError:
+        logging.warning("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
+    
+    # generate filename
+    filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], submission['ext'])
+    filename = filename.replace('/', FORWARD_SLASH_REPLACEMENT)
+    filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
+    if not os.path.isfile(filepath):
+        fp = open(filepath, 'w')
+        logging.debug("Retrieving code for submission %d" % submission['id'])
+        code = get_submission_code(submission['id'], submission['contestId'])
+        logging.info("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+        fp.write(code)
+        fp.close()
+    else:
+        logging.warning("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+
 # traverse submission list in reverse order (from oldest to newest)
 # save first submission with git commit of Add submission for [index] - [problem_name]
 # save subsequent submissions with git commit of Attempt bugfix
 def build_codebook(user, root):
+    global FORWARD_SLASH_REPLACEMENT, submissions_list, contest_names
     FORWARD_SLASH_REPLACEMENT = '╱'
     start_time = time.process_time_ns()
     
@@ -118,32 +146,15 @@ def build_codebook(user, root):
     else:
         logging.critical("Failed to retrieve contest names")
 
-    for submission in tqdm(submissions_list):
-        # Create contest folder
-        try:
-            logging.debug("Creating folder for contest %s" % contest_names[submission['contestId']])
-            os.mkdir(os.path.join('Codeforces', contest_names[submission['contestId']]))
-            logging.info("Successfully created folder for contest %s" % contest_names[submission['contestId']])
-        except FileExistsError:
-            logging.warning("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        executor.map(thread_func, tqdm(submissions_list))
         
-        # generate filename
-        filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], submission['ext'])
-        filename = filename.replace('/', FORWARD_SLASH_REPLACEMENT)
-        filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
-        if not os.path.isfile(filepath):
-            fp = open(filepath, 'w')
-            logging.debug("Retrieving code for submission %d" % submission['id'])
-            code = get_submission_code(submission['id'], submission['contestId'])
-            logging.info("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
-            fp.write(code)
-            fp.close()
-        else:
-            logging.warning("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
     stop_time = time.process_time_ns()
     logging.info("Codebook generation completed in %dns" % (stop_time - start_time))
 
 if __name__ == "__main__":
+    logging.basicConfig(level = logging.INFO, 
+                        format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
     root = "/home/akrish13/Documents/codebook"
     user = "MystikNinja"
     build_codebook(user, root)
