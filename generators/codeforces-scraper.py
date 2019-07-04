@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 from ratelimit import limits, sleep_and_retry
 from tqdm import tqdm
 
-logging.basicConfig(level = logging.ERROR, format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
 
 def detect_language(lang):
     LANGS = {
@@ -144,6 +143,8 @@ def build_codebook(user, root):
     logging.info("Codebook generation completed in %dns" % (stop_time - start_time))
 
 if __name__ == "__main__":
+    logging.basicConfig(level = logging.ERROR, 
+                        format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
     root = "/home/akrish13/Documents/codebook"
     user = "MystikNinja"
     build_codebook(user, root)
