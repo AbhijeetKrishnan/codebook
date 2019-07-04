@@ -1,13 +1,14 @@
 import logging
 import os
 import time
+import asyncio
 
 import requests
 from bs4 import BeautifulSoup
 from ratelimit import limits, sleep_and_retry
 from tqdm import tqdm
 
-logging.basicConfig(level = logging.ERROR, format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
+logging.basicConfig(level = logging.INFO, format = "[%(levelname)s] %(funcName)s:%(lineno)s - %(message)s")
 
 def detect_language(lang):
     LANGS = {
@@ -87,11 +88,41 @@ def get_submission_code(submission_id, contest_id):
 
     return res
 
+FORWARD_SLASH_REPLACEMENT = '╱'
+
+async def download_submission(submission, contest_names):
+    # Create contest folder
+    try:
+        logging.debug("Creating folder for contest %s" % contest_names[submission['contestId']])
+        os.mkdir(os.path.join('Codeforces', contest_names[submission['contestId']]))
+        logging.info("Successfully created folder for contest %s" % contest_names[submission['contestId']])
+    except FileExistsError:
+        logging.warning("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
+    
+    # generate filename
+    filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], submission['ext'])
+    filename = filename.replace('/', FORWARD_SLASH_REPLACEMENT)
+    filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
+    if not os.path.isfile(filepath):
+        fp = open(filepath, 'w')
+        logging.debug("Retrieving code for submission %d" % submission['id'])
+        code = get_submission_code(submission['id'], submission['contestId'])
+        logging.info("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+        fp.write(code)
+        fp.close()
+    else:
+        logging.warning("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+
+async def download_all_submissions(contest_names, submission_list):
+    tasks = []
+    for submission in submission_list:
+        task = asyncio.ensure_future(download_submission(submission, contest_names))
+        tasks.append(task)
+    await asyncio.gather(*tasks, return_exceptions=True)
 # traverse submission list in reverse order (from oldest to newest)
 # save first submission with git commit of Add submission for [index] - [problem_name]
 # save subsequent submissions with git commit of Attempt bugfix
 def build_codebook(user, root):
-    FORWARD_SLASH_REPLACEMENT = '╱'
     start_time = time.process_time_ns()
     
     logging.info("Building Codeforces codebook for %s in folder %s/Codeforces" % (user, root))
@@ -118,28 +149,7 @@ def build_codebook(user, root):
     else:
         logging.critical("Failed to retrieve contest names")
 
-    for submission in tqdm(submissions_list):
-        # Create contest folder
-        try:
-            logging.debug("Creating folder for contest %s" % contest_names[submission['contestId']])
-            os.mkdir(os.path.join('Codeforces', contest_names[submission['contestId']]))
-            logging.info("Successfully created folder for contest %s" % contest_names[submission['contestId']])
-        except FileExistsError:
-            logging.warning("Skipped %s since folder already exists..." % contest_names[submission['contestId']])
-        
-        # generate filename
-        filename = "%s - %s.%s" % (submission['problemIndex'], submission['problemName'], submission['ext'])
-        filename = filename.replace('/', FORWARD_SLASH_REPLACEMENT)
-        filepath = os.path.join('Codeforces', contest_names[submission['contestId']], filename)
-        if not os.path.isfile(filepath):
-            fp = open(filepath, 'w')
-            logging.debug("Retrieving code for submission %d" % submission['id'])
-            code = get_submission_code(submission['id'], submission['contestId'])
-            logging.info("Successfully retrieved code for problem %s - %s from contest %s" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
-            fp.write(code)
-            fp.close()
-        else:
-            logging.warning("Skipped problem %s - %s from contest %s since it already exists" % (submission['problemIndex'], submission['problemName'], contest_names[submission['contestId']]))
+    asyncio.get_event_loop().run_until_complete(download_all_submissions(contest_names, submissions_list))
     stop_time = time.process_time_ns()
     logging.info("Codebook generation completed in %dns" % (stop_time - start_time))
 
