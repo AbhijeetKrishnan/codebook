@@ -4,6 +4,10 @@
 
 using namespace std;
 
+#ifndef ONLINE_JUDGE
+    #define DEBUG true
+#endif
+
 int main() {
     int t;
     cin >> t;
@@ -25,6 +29,12 @@ int main() {
                     min_penalty = curr_penalty;
                     min_index = i;
                 }
+            }
+            if (DEBUG) {
+                for (auto e: v) {
+                    cout << e << " ";
+                }
+                cout << "(" << v[min_index] << ", " << v[(min_index + 1) % sz] << ") " << min_penalty << " " << penalty << "\n"; 
             }
             penalty += min_penalty;
             v[min_index] = min_penalty;
