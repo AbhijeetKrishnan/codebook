@@ -12,6 +12,8 @@ variety of platforms
 - [ ] Add generators for Codechef, HackerRank, HackerEarth
 - [ ] Add better error handling in case requests get rate limited
 - [ ] Add git integration
+- [ ] Script to delete all executables from all subdirectories
+- [ ] Better workflow for contests - snippets, folder/file creation, git upload
 
 ## Generators
 
