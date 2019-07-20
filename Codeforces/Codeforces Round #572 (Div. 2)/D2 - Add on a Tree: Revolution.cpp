@@ -7,7 +7,7 @@
 using namespace std;
 
 typedef unordered_map<int, vector<pair<int, int>>> graph;
-typedef pair<pair<int, int>, int> op;
+typedef tuple<int, int, int> op;
 
 void find_all_leaves(graph& tree, int root, int parent, vector<int>& leaves) {
     stack<int> s;
@@ -16,18 +16,18 @@ void find_all_leaves(graph& tree, int root, int parent, vector<int>& leaves) {
     seen[root] = true;
     seen[parent] = true;
     while (not s.empty()) {
-        int curr = s.top();
+        int u = s.top();
         s.pop();
         bool expanded = false;
-        for (auto e: tree[curr]) {
-            if (not seen[e.first]) {
-                seen[e.first] = true;
-                s.push(e.first);
+        for (auto [v, _]: tree[u]) {
+            if (not seen[v]) {
+                seen[v] = true;
+                s.push(v);
                 expanded = true;
             }
         }
         if (not expanded) {
-            leaves.push_back(curr);
+            leaves.push_back(u);
         }
     }
     // printf("Leaves (%d <- %d): ", parent, root);
@@ -45,15 +45,12 @@ int solve(graph& tree, vector<int>& parent, int root, vector<op>& ans) {
     s.push(root);
     seen[root] = true;
     while (not s.empty()) {
-        int curr = s.top();
+        int u = s.top();
         s.pop();
-        for (auto e: tree[curr]) {
-            if (not seen[e.first]) {
-                s.push(e.first);
-                seen[e.first] = true;
-                int u = curr;
-                int v = e.first;
-                int w = e.second;
+        for (auto [v, weight]: tree[u]) {
+            if (not seen[v]) {
+                s.push(v);
+                seen[v] = true;
                 //printf("Calculating ops for edge (%d - %d)", u, v);
                 // find leaf in graph from v not including u-v edge
                 vector<int> target_leaves;
@@ -67,16 +64,16 @@ int solve(graph& tree, vector<int>& parent, int root, vector<op>& ans) {
                 // find another leaf in graph from u not including u-v edge
                 int leaf_2 = other_leaves[1];
                 //printf("Other leaves: %d, %d", leaf_1, leaf_2);
-                ans.push_back({{target_leaf + 1, leaf_1 + 1}, w / 2});
-                ans.push_back({{target_leaf + 1, leaf_2 + 1}, w / 2});
-                ans.push_back({{leaf_1 + 1, leaf_2 + 1}, -w / 2});
+                ans.push_back({target_leaf + 1, leaf_1 + 1, weight / 2});
+                ans.push_back({target_leaf + 1, leaf_2 + 1, weight / 2});
+                ans.push_back({leaf_1 + 1, leaf_2 + 1, -weight / 2});
                 res += 3;
                 // subtract edge_val from all edges in path from tree[root][i].first to target_leaf
                 int curr = target_leaf;
                 while (curr != v) {
-                    for (auto &e: tree[parent[curr]]) {
-                        if (e.first == curr) {
-                            e.second -= w;
+                    for (auto &[_v, _w]: tree[parent[curr]]) {
+                        if (_v == curr) {
+                            _w -= weight;
                             curr = parent[curr];
                             break;
                         }
@@ -159,8 +156,8 @@ int main() {
             vector<op> ans;
             int num_operations = solve(tree, parent, nonleaf_vertex, ans);
             cout << num_operations << "\n";
-            for (auto e: ans) {
-                cout << e.first.first << " " << e.first.second << " " << e.second << "\n";
+            for (auto [u, v, w]: ans) {
+                cout << u << " " << v << " " << w << "\n";
             }
         }
     }
