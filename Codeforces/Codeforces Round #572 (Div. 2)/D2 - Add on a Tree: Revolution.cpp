@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <stack>
 #include <vector>
+#include <functional>
 #include <unordered_map>
 
 using namespace std;
@@ -9,32 +10,28 @@ using namespace std;
 typedef unordered_map<int, vector<pair<int, int>>> graph;
 typedef tuple<int, int, int> op;
 
-void find_all_leaves(graph& tree, int root, int parent, vector<int>& leaves) {
-    stack<int> s;
-    s.push(root);
+pair<int, int> find_two_leaves(graph& tree, int root, int parent) {
+    vector<int> leaf(2);
     vector<bool> seen(tree.size(), false);
-    seen[root] = true;
-    seen[parent] = true;
-    while (not s.empty()) {
-        int u = s.top();
-        s.pop();
-        bool expanded = false;
-        for (auto [v, _]: tree[u]) {
-            if (not seen[v]) {
-                seen[v] = true;
-                s.push(v);
-                expanded = true;
+    function<int(int)> dfs = [&](int v) {
+        seen[v] = true;
+        for (auto [adj, _]: tree[v]) {
+            if (not seen[adj]) {
+                return dfs(adj);
             }
         }
-        if (not expanded) {
-            leaves.push_back(u);
+        return v;
+    };
+    seen[root] = true;
+    seen[parent] = true;
+    for (int i = 0; i < 2; i++) {
+        for (auto [v, _]: tree[root]) {
+            if (not seen[v]) {
+                leaf[i] = dfs(v);
+            }
         }
     }
-    // printf("Leaves (%d <- %d): ", parent, root);
-    // for (auto leaf: leaves) {
-    //     cout << leaf << " ";
-    // }
-    // cout << "\n";
+    return {leaf[0], leaf[1]};
 }
 
 void find_ops(graph& tree, vector<int>& degree, vector<op> edges, vector<op>& ans) {
@@ -44,9 +41,8 @@ void find_ops(graph& tree, vector<int>& degree, vector<op> edges, vector<op>& an
             swap(u, v);
         }
         vector<int> leaves;
-        find_all_leaves(tree, v, u, leaves);
-        int leaf_v1 = leaves[0];
-        int leaf_v2 = leaves[1];
+        int leaf_v1, leaf_v2;
+        tie(leaf_v1, leaf_v2) = find_two_leaves(tree, v, u);
         if (degree[u] == 1) {
             ans.push_back({u + 1, leaf_v1 + 1, w / 2});
             ans.push_back({u + 1, leaf_v2 + 1, w / 2});
@@ -54,9 +50,8 @@ void find_ops(graph& tree, vector<int>& degree, vector<op> edges, vector<op>& an
         }
         else {
             leaves.clear();
-            find_all_leaves(tree, u, v, leaves);
-            int leaf_u1 = leaves[0];
-            int leaf_u2 = leaves[1];
+            int leaf_u1, leaf_u2;
+            tie(leaf_u1, leaf_u2) = find_two_leaves(tree, u, v);
             ans.push_back({leaf_u1 + 1, leaf_v1 + 1, w / 2});
             ans.push_back({leaf_u2 + 1, leaf_v2 + 1, w / 2});
             ans.push_back({leaf_u1 + 1, leaf_u2 + 1, -w / 2});
