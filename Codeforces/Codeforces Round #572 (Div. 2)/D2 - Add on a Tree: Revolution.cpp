@@ -20,6 +20,7 @@ pair<int, int> find_two_leaves(graph& tree, int root, int parent) {
                 return dfs(adj);
             }
         }
+        //cout << v << " ";
         return v;
     };
     seen[root] = true;
@@ -28,15 +29,16 @@ pair<int, int> find_two_leaves(graph& tree, int root, int parent) {
         for (auto [v, _]: tree[root]) {
             if (not seen[v]) {
                 leaf[i] = dfs(v);
+                break;
             }
         }
     }
+    //cout << leaf[0] << " " << leaf[1] << "\n";
     return {leaf[0], leaf[1]};
 }
 
 void find_ops(graph& tree, vector<int>& degree, vector<op> edges, vector<op>& ans) {
     for (auto [u, v, w]: edges) {
-        //printf("Calculating ops for edge (%d - %d)", u, v);
         if (degree[v] == 1) {
             swap(u, v);
         }
