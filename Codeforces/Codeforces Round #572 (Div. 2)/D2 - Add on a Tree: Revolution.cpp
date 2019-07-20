@@ -135,7 +135,7 @@ int main() {
     else {
         cout << "YES\n";
         if (n == 2) {
-            cout << "1 2 " << tree[0][0].second;
+            cout << "1\n1 2 " << tree[0][0].second;
         }
         else {
             // create rooted tree with non-leaf vertex v as root
