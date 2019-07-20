@@ -37,70 +37,30 @@ void find_all_leaves(graph& tree, int root, int parent, vector<int>& leaves) {
     // cout << "\n";
 }
 
-int solve(graph& tree, vector<int>& parent, int root, vector<op>& ans) {
-    int res = 0;
-    int n = tree.size();
-    stack<int> s;
-    vector<bool> seen(n, false);
-    s.push(root);
-    seen[root] = true;
-    while (not s.empty()) {
-        int u = s.top();
-        s.pop();
-        for (auto [v, weight]: tree[u]) {
-            if (not seen[v]) {
-                s.push(v);
-                seen[v] = true;
-                //printf("Calculating ops for edge (%d - %d)", u, v);
-                // find leaf in graph from v not including u-v edge
-                vector<int> target_leaves;
-                find_all_leaves(tree, v, u, target_leaves);
-                int target_leaf = target_leaves[0];
-                //printf("Target leaf: %d", target_leaf);
-                // find leaf in graph from u not including u-v edge
-                vector<int> other_leaves;
-                find_all_leaves(tree, u, v, other_leaves);
-                int leaf_1 = other_leaves[0];
-                // find another leaf in graph from u not including u-v edge
-                int leaf_2 = other_leaves[1];
-                //printf("Other leaves: %d, %d", leaf_1, leaf_2);
-                ans.push_back({target_leaf + 1, leaf_1 + 1, weight / 2});
-                ans.push_back({target_leaf + 1, leaf_2 + 1, weight / 2});
-                ans.push_back({leaf_1 + 1, leaf_2 + 1, -weight / 2});
-                res += 3;
-                // subtract edge_val from all edges in path from tree[root][i].first to target_leaf
-                int curr = target_leaf;
-                while (curr != v) {
-                    for (auto &[_v, _w]: tree[parent[curr]]) {
-                        if (_v == curr) {
-                            _w -= weight;
-                            curr = parent[curr];
-                            break;
-                        }
-                    }
-                }
-            }
+void find_ops(graph& tree, vector<int>& degree, vector<op> edges, vector<op>& ans) {
+    for (auto [u, v, w]: edges) {
+        //printf("Calculating ops for edge (%d - %d)", u, v);
+        if (degree[v] == 1) {
+            swap(u, v);
         }
-    }
-    return res;
-}
-
-void dfs(graph& g, int root, vector<int>& parent) {
-    stack<int> s;
-    vector<bool> seen(g.size(), false);
-    s.push(root);
-    seen[root] = true;
-    parent[root] = root;
-    while (not s.empty()) {
-        int curr = s.top();
-        s.pop();
-        for (auto e: g[curr]) {
-            if (not seen[e.first]) {
-                //printf("Seeing edge %d -> %d\n", curr, e.first);
-                seen[e.first] = true;
-                s.push(e.first);
-                parent[e.first] = curr;
-            }
+        vector<int> leaves;
+        find_all_leaves(tree, v, u, leaves);
+        int leaf_v1 = leaves[0];
+        int leaf_v2 = leaves[1];
+        if (degree[u] == 1) {
+            ans.push_back({u + 1, leaf_v1 + 1, w / 2});
+            ans.push_back({u + 1, leaf_v2 + 1, w / 2});
+            ans.push_back({leaf_v1 + 1, leaf_v2 + 1, -w / 2});
+        }
+        else {
+            leaves.clear();
+            find_all_leaves(tree, u, v, leaves);
+            int leaf_u1 = leaves[0];
+            int leaf_u2 = leaves[1];
+            ans.push_back({leaf_u1 + 1, leaf_v1 + 1, w / 2});
+            ans.push_back({leaf_u2 + 1, leaf_v2 + 1, w / 2});
+            ans.push_back({leaf_u1 + 1, leaf_u2 + 1, -w / 2});
+            ans.push_back({leaf_v1 + 1, leaf_v2 + 1, -w / 2});
         }
     }
 }
@@ -109,6 +69,7 @@ int main() {
     int n;
     cin >> n;
     graph tree;
+    vector<op> edges;
     vector<int> degree(n, 0);
     for (int i = 0; i + 1 < n; i++) {
         int u, v, x;
@@ -118,6 +79,7 @@ int main() {
         tree[v].push_back({u, x});
         degree[u]++;
         degree[v]++;
+        edges.push_back({u, v, x});
     }
     bool possible = true;
     for (int i: degree) {
@@ -135,27 +97,12 @@ int main() {
             cout << "1\n1 2 " << tree[0][0].second;
         }
         else {
-            // create rooted tree with non-leaf vertex v as root
-            int nonleaf_vertex;
-            for (int i = 0; i < n; i++) {
-                if (degree[i] != 1) {
-                    nonleaf_vertex = i;
-                    break;
-                }
-            }
-            //cout << nonleaf_vertex << "\n";
-            vector<int> parent(n);
-            dfs(tree, nonleaf_vertex, parent);
-            // printf("Parent: ");
-            // for (int i = 0; i < n; i++) {
-            //     printf("(%d <- %d)\n", parent[i], i);
-            // }
             // preprocess tree to find 3 leaves in different subtrees for every non-leaf node
 
-            // solve
+            // find_ops
             vector<op> ans;
-            int num_operations = solve(tree, parent, nonleaf_vertex, ans);
-            cout << num_operations << "\n";
+            find_ops(tree, degree, edges, ans);
+            cout << ans.size() << "\n";
             for (auto [u, v, w]: ans) {
                 cout << u << " " << v << " " << w << "\n";
             }
