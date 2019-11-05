@@ -10,13 +10,6 @@ def grouper(iterable, n=2, fillvalue=None):
     args = [iter(iterable)] * n
     return itertools.zip_longest(*args, fillvalue=fillvalue)
 
-def min_distance(x, A, B, C):
-    min_c = min(grouper(C), key=lambda c: dist(c, x))
-    min_b = min(grouper(B), key=lambda b: dist(min_c, b) + dist(b, x))
-    min_a = min(grouper(A), key=lambda a: dist(min_b, a) + dist(a, x))
-    print(min_a, min_b, min_c, dist(min_a, x) + dist(min_b, min_a) + dist(min_c, min_b))
-    return dist(min_a, x) + dist(min_b, min_a) + dist(min_c, min_b)
-
 if __name__ == '__main__':
     t = int(input())
     for test in range(t):
@@ -32,7 +25,7 @@ if __name__ == '__main__':
         min_m2k = {}
         for j in range(m):
             min_m2k[j] = K.index(min(K, key=lambda k: dist(k, M[j])))
-        
+
         min_distance = dist(N[0], x) + dist(M[0], N[0]) + dist(K[0], M[0])
         for i in range(n):
             for j in range(m):
