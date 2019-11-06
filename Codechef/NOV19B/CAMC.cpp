@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <climits>
 #include <cstdlib>
 #include <cstdio>
 
@@ -29,41 +28,48 @@ int main() {
         }
         int min_diff = INF;
         for (int i = 0; i < a[min_col].size(); i++) {
-            int max_ub, min_lb;
-            max_ub = min_lb = a[min_col][i];
-            bool ub_poss = true, lb_poss = true;
+            int lb, ub;
+            lb = ub = a[min_col][i];
             for (int j = 0; j < m; j++) {
                 if (j == min_col) {
                     continue;
                 }
-                auto itr = lower_bound(a[j].begin(), a[j].end(), a[min_col][i]);
-                if (itr != a[j].end()) {
-                    max_ub = max(max_ub, *itr);
-                }
-                else {
-                    max_ub = max(max_ub, *a[j].rbegin());
-                    lb_poss = false;
-                }
-                itr = upper_bound(a[j].begin(), a[j].end(), a[min_col][i]);
-                if (itr != a[j].begin()) {
+                auto itr = lower_bound(a[j].begin(), a[j].end(), lb);
+                if (itr == a[j].end()) {
                     itr--;
-                    min_lb = min(min_lb, *itr);
-                }
-                else {
-                    min_lb = min(min_lb, *a[j].begin());
-                    ub_poss = false;
+                    lb = *itr;
                 }
             }
-            if (lb_poss) {
-                printf("Assuming lower bound: lb: %d ub: %d\n", a[min_col][i], max_ub);
-                min_diff = min(min_diff, max_ub - a[min_col][i]);
+            for (int j = 0; j < m; j++) {
+                if (j == min_col) {
+                    continue;
+                }
+                auto itr = lower_bound(a[j].begin(), a[j].end(), lb);
+                if (*itr > ub and itr == a[j].begin()) {
+                    ub = *itr;
+                }
             }
-            if (ub_poss) {
-                printf("Assuming upper bound: lb: %d ub: %d\n", min_lb, a[min_col][i]);
-                min_diff = min(min_diff, a[min_col][i] - min_lb);
+            for (int j = 0; j < m; j++) {
+                if (j == min_col) {
+                    continue;
+                }
+                auto itr = lower_bound(a[j].begin(), a[j].end(), lb);
+                if (*itr > ub and itr != a[j].begin()) {
+                    int min_ub, max_lb;
+                    bool max_lb_exists = false;
+                    min_ub = *itr;
+                    itr--;
+                    max_lb = *itr;
+                    if (lb - max_lb < min_ub - ub) {
+                        lb = max_lb;
+                    }
+                    else {
+                        ub = min_ub;
+                    }
+                }
             }
-            printf("Assuming in between range: lb: %d, ub: %d\n", min_lb, max_ub);
-            min_diff = min(min_diff, max_ub - min_lb);
+            // printf("lb: %d, ub: %d\n", lb, ub);
+            min_diff = min(min_diff, ub - lb);
         }
         cout << min_diff << "\n";
     }
