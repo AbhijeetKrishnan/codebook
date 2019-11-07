@@ -28,9 +28,12 @@ int main() {
                 }
             }
             if (not isBob[i]) {
-                if (vowels.find(L[i][0]) == vowels.end() and vowels.find(L[i][L[i].size() - 1]) == vowels.end() and L[i].size() % 2 != 0) {
-                    isBob[i] = true;
-                    k_bob++;
+                for (int j = 0; j + 2 < L[i].size(); j++) {
+                    if (vowels.find(L[i][j]) == vowels.end() and vowels.find(L[i][j + 2]) == vowels.end()) {
+                        isBob[i] = true;
+                        k_bob++;
+                        break;
+                    }
                 }
             }
         }
@@ -51,6 +54,14 @@ int main() {
         }
 
         /*
+        for (int i = 0; i < l; i++) {
+            cout << L[i];
+            if (isBob[i])
+                cout << ": Bob";
+            else 
+                cout << ": Alice";
+            cout << "\n";
+        }
         cout << "K_alice: " << k_alice << " K_bob: " << k_bob << "\n";
         cout << "X_alice: ";
         for (int x: x_alice) {
