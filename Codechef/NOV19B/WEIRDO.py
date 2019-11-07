@@ -60,8 +60,7 @@ if __name__ == '__main__':
         score -= sum([math.log10(x_b) for x_b in x_bob.values()])
         score -= sum([k_alice * math.log10(f_a) for f_a in freq_alice.values()])
         score += sum([k_bob * math.log10(f_b) for f_b in freq_bob.values()])
-        score = 10 ** score
-        if score > 10 ** 7:
+        if score > 7:
             print('Infinity')
         else:
             print(f'{score:.10f}')    
