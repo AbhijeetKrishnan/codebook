@@ -18,7 +18,7 @@ def squares(a, b):
     for num in range(start, end + 1):
         yield num ** 2
 
-for i in range(2, 20):
+for i in range(2, 40):
     poss.append({})
     for key, value in poss[i - 1].items():
         for base, orig_value in poss[1].items():
