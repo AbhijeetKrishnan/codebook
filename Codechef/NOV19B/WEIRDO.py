@@ -1,3 +1,4 @@
+import math
 import string
 from collections import defaultdict
 
@@ -32,9 +33,6 @@ if __name__ == '__main__':
             else:
                 Alice.append(s)
 
-        #print('Alice: ', Alice)
-        #print('Bob', Bob)
-
         k_alice = len(Alice)
         k_bob = len(Bob)
 
@@ -58,24 +56,12 @@ if __name__ == '__main__':
                     seen[c] = True
                     x_bob[c] += 1
 
-        x_alice = list(x_alice.values())
-        x_bob = list(x_bob.values())
-        freq_alice = list(freq_alice.values())
-        freq_bob = list(freq_bob.values())
-
-        #print(freq_alice, freq_bob)
-        #print(x_alice, x_bob)
-
-        score = 1
-        x_alice += [1] * (len(x_bob) - len(x_alice))
-        x_bob += [1] * (len(x_alice) - len(x_bob))
-        for x_a, x_b in zip(x_alice, x_bob):
-            score *= x_a / x_b
-        freq_alice += [1] * (len(freq_bob) - len(freq_alice))
-        freq_bob += [1] * (len(freq_alice) - len(freq_bob))
-        for f_a, f_b in zip(freq_alice, freq_bob):
-            score *= (f_b ** k_bob) / (f_a ** k_alice)
+        score = sum([math.log10(x_a) for x_a in x_alice.values()])
+        score -= sum([math.log10(x_b) for x_b in x_bob.values()])
+        score -= sum([k_alice * math.log10(f_a) for f_a in freq_alice.values()])
+        score += sum([k_bob * math.log10(f_b) for f_b in freq_bob.values()])
+        score = 10 ** score
         if score > 10 ** 7:
             print('Infinity')
         else:
-            print('{:.10f}'.format(score))    
+            print(f'{score:.10f}')    
