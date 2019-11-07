@@ -31,7 +31,7 @@ for i in range(2, 20):
 
 if __name__ == '__main__':
     t = int(input())
-    for test in range(1, t):
+    for test in range(t):
         digs = int(input())
         found = False
         n = digs
