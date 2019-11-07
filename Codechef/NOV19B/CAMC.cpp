@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstdio>
+#include <tuple>
 
 using namespace std;
 
@@ -20,56 +21,38 @@ int main() {
             cin >> tmp;
             a[i % m].push_back(tmp);
         }
-        int min_col = m - 1;
         for (int i = 0; i < m; i++) {
             sort(a[i].begin(), a[i].end());
-            if (a[i].size() < a[min_col].size())
-                min_col = i;
         }
-        int min_diff = INF;
-        for (int i = 0; i < a[min_col].size(); i++) {
-            int lb, ub;
-            lb = ub = a[min_col][i];
-            for (int j = 0; j < m; j++) {
-                if (j == min_col) {
-                    continue;
-                }
-                auto itr = lower_bound(a[j].begin(), a[j].end(), lb);
-                if (itr == a[j].end()) {
-                    itr--;
-                    lb = *itr;
-                }
+        vector<tuple<int, int, int>> min_heap;
+        int max_val = 0;
+        tuple<int, int, int> max_ele;
+        for (int i = 0; i < m; i++) {
+            min_heap.push_back(make_tuple(a[i][0], i, 0));
+            if (a[i][0] > max_val) {
+                max_val = a[i][0];
+                max_ele = make_tuple(a[i][0], i, 0);
             }
-            for (int j = 0; j < m; j++) {
-                if (j == min_col) {
-                    continue;
+        }
+        make_heap(min_heap.begin(), min_heap.end(), greater<tuple<int, int, int>>());
+        int diff, min_diff = INF;
+        while (true) {
+            diff = get<0>(max_ele) - get<0>(min_heap.front());
+            min_diff = min(min_diff, diff);
+            if (get<2>(min_heap.front()) + 1 < a[get<1>(min_heap.front())].size()) {
+                pop_heap(min_heap.begin(), min_heap.end(), greater<tuple<int, int, int>>());
+                tuple<int, int, int> old_min_ele = min_heap.back();
+                min_heap.pop_back();
+                min_heap.push_back(make_tuple(a[get<1>(old_min_ele)][get<2>(old_min_ele) + 1], get<1>(old_min_ele), get<2>(old_min_ele) + 1));
+                if (get<0>(min_heap.back()) > max_val) {
+                    max_val = get<0>(min_heap.back());
+                    max_ele = min_heap.back();
                 }
-                auto itr = lower_bound(a[j].begin(), a[j].end(), lb);
-                if (*itr > ub and itr == a[j].begin()) {
-                    ub = *itr;
-                }
+                push_heap(min_heap.begin(), min_heap.end(), greater<tuple<int, int, int>>());
             }
-            for (int j = 0; j < m; j++) {
-                if (j == min_col) {
-                    continue;
-                }
-                auto itr = lower_bound(a[j].begin(), a[j].end(), lb);
-                if (*itr > ub and itr != a[j].begin()) {
-                    int min_ub, max_lb;
-                    bool max_lb_exists = false;
-                    min_ub = *itr;
-                    itr--;
-                    max_lb = *itr;
-                    if (lb - max_lb < min_ub - ub) {
-                        lb = max_lb;
-                    }
-                    else {
-                        ub = min_ub;
-                    }
-                }
+            else {
+                break;
             }
-            // printf("lb: %d, ub: %d\n", lb, ub);
-            min_diff = min(min_diff, ub - lb);
         }
         cout << min_diff << "\n";
     }
