@@ -4,7 +4,11 @@
 
 using namespace std;
 
-bool contains_cycle(vector<vector<int>>& g, int n, int skip) {
+const int LIM = 1e5;
+
+vector<int> g[LIM];
+
+bool contains_cycle(int n, int skip) {
     vector<int> parent(n);
     vector<bool> seen(n, false);
     deque<int> q;
@@ -35,7 +39,7 @@ bool contains_cycle(vector<vector<int>>& g, int n, int skip) {
     return false;
 }
 
-void find_cycles(vector<vector<int>>& g, int n, vector<int>& cycles) {
+void find_cycles(int n, vector<int>& cycles) {
     vector<int> parent(n);
     vector<bool> seen(n, false);
     fill(cycles.begin(), cycles.end(), 0);
@@ -80,13 +84,15 @@ void find_cycles(vector<vector<int>>& g, int n, vector<int>& cycles) {
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
-    
+
     int t;
     cin >> t;
     for (int test = 0; test < t; test++) {
         int n, m;
         cin >> n >> m;
-        vector<vector<int>> g(n);
+        for (int i = 0; i < n; i++) {
+            g[i].clear();
+        }
         for (int i = 0; i < m; i++) {
             int u, v;
             cin >> u >> v;
@@ -95,13 +101,13 @@ int main() {
             g[v].push_back(u);
         }
         
-        if (not contains_cycle(g, n, -1)) {
+        if (not contains_cycle(n, -1)) {
             cout << "-1\n";
             continue;
         }
 
         vector<int> cycles(n);
-        find_cycles(g, n, cycles);
+        find_cycles(n, cycles);
         int max_cycles = 0;
         for (int i = 0; i < n; i++) {
             max_cycles = max(max_cycles, cycles[i]);
@@ -111,7 +117,7 @@ int main() {
         for (int i = 0; i < n; i++) {
             if (cycles[i] != max_cycles)
                 continue;
-            if (not contains_cycle(g, n, i)) {
+            if (not contains_cycle(n, i)) {
                 failure = i + 1;
                 break;
             }
