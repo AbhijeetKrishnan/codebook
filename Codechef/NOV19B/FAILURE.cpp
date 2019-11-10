@@ -78,6 +78,9 @@ void find_cycles(vector<vector<int>>& g, int n, vector<int>& cycles) {
 }
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
     int t;
     cin >> t;
     for (int test = 0; test < t; test++) {
