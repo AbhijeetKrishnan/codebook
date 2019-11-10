@@ -4,9 +4,18 @@
 
 using namespace std;
 
-bool contains_cycle(vector<vector<int>>& g, int n, int skip) {
-    vector<int> parent(n);
-    vector<bool> seen(n, false);
+const int LIM = 1e5;
+
+int t;
+int n, m;
+vector<int> g[LIM];
+int parent[LIM];
+int cycles[LIM];
+int colour[LIM];
+bool seen[LIM];
+
+bool contains_cycle(int skip) {
+    fill(seen, seen + n, false);
     deque<int> q;
     for (int root = 0; root < n; root++) {
         if (seen[root] or root == skip) {
@@ -35,7 +44,7 @@ bool contains_cycle(vector<vector<int>>& g, int n, int skip) {
     return false;
 }
 
-void dfs(vector<vector<int>>& g, int u, int p, vector<int>& parent, vector<int>& colour, vector<int>& cycles) {
+void dfs(int u, int p) {
     if (colour[u] == 2) {
         return;
     }
@@ -54,31 +63,28 @@ void dfs(vector<vector<int>>& g, int u, int p, vector<int>& parent, vector<int>&
         if (v == parent[u]) {
             continue;
         }
-        dfs(g, v, u, parent, colour, cycles);
+        dfs(v, u);
     }
     colour[u] = 2;
 }
 
-void find_cycles(vector<vector<int>>& g, vector<int>& cycles) {
-    int n = g.size();
-    vector<int> parent(n);
-    vector<int> colour(n, 0);
-    fill(cycles.begin(), cycles.end(), 0);
+void find_cycles() {
+    fill(cycles, cycles + n, 0);
     for (int root = 0; root < n; root++) {
         if (colour[root] == 2) {
             continue;
         }
-        dfs(g, root, root, parent, colour, cycles);
+        dfs(root, root);
     }
 }
 
 int main() {
-    int t;
     cin >> t;
     for (int test = 0; test < t; test++) {
-        int n, m;
         cin >> n >> m;
-        vector<vector<int>> g(n);
+        for (int i = 0; i < n; i++) {
+            g[i].clear();
+        }
         for (int i = 0; i < m; i++) {
             int u, v;
             cin >> u >> v;
@@ -87,12 +93,12 @@ int main() {
             g[v].push_back(u);
         }
         
-        if (not contains_cycle(g, n, -1)) {
+        if (not contains_cycle(-1)) {
             cout << "-1\n";
             continue;
         }
-        vector<int> cycles(n, 0);
-        find_cycles(g, cycles);
+
+        find_cycles();
 
         int max_cycles = 0;
         for (int i = 0; i < n; i++) {
@@ -104,7 +110,7 @@ int main() {
             if (cycles[i] != max_cycles) {
                 continue;
             }
-            if (not contains_cycle(g, n, i)) {
+            if (not contains_cycle(i)) {
                 failure = i + 1;
                 break;
             }
