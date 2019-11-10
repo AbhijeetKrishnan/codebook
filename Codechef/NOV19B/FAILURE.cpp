@@ -1,23 +1,13 @@
 #include <iostream>
 #include <vector>
 #include <deque>
+#include <set>
 
 using namespace std;
 
-const int LIM = 1e5;
-
-int t;
-int n, m;
-vector<int> g[LIM];
-int parent[LIM];
-int cycles[LIM];
-int colour[LIM];
-bool seen[LIM];
-
-bool contains_cycle(int skip) {
-    for (int i = 0; i < n; i++) {
-        seen[i] = false;
-    }
+bool contains_cycle(vector<set<int>>& g, int n, int skip) {
+    vector<int> parent(n);
+    vector<bool> seen(n, false);
     deque<int> q;
     for (int root = 0; root < n; root++) {
         if (seen[root] or root == skip) {
@@ -46,62 +36,70 @@ bool contains_cycle(int skip) {
     return false;
 }
 
-void dfs(int u, int p) {
-    if (colour[u] == 2) {
-        return;
-    }
-    if (colour[u] == 1) {
-        int curr = p;
-        cycles[curr]++;
-        while (curr != u) {
-            curr = parent[curr];
-            cycles[curr]++;
-        }
-        return;
-    }
-    parent[u] = p;
-    colour[u] = 1;
-    for (auto v: g[u]) {
-        if (v == parent[u]) {
+void find_cycles(vector<set<int>>& g, int n, vector<int>& cycles) {
+    vector<int> parent(n);
+    vector<bool> seen(n, false);
+    fill(cycles.begin(), cycles.end(), 0);
+    vector<pair<int, int>> stack;
+    for (int root = 0; root < n; root++) {
+        if (seen[root]) {
             continue;
         }
-        dfs(v, u);
-    }
-    colour[u] = 2;
-}
-
-void find_cycles() {
-    for (int root = 0; root < n; root++) {
-        dfs(root, root);
+        stack.push_back({root, root});
+        while (not stack.empty()) {
+            // cout << "Stack: ";
+            // for (auto ele: stack) {
+            //     cout << "(" << ele.first << ", " << ele.second << ") ";
+            // }
+            // cout << "\n";
+            pair<int, int> tmp = stack.back(); stack.pop_back();
+            int u = tmp.first;
+            int p = tmp.second;
+            // cout << "u: " << u << " p: " << p << "\n";
+            
+            if (not seen[u]) {
+                seen[u] = true;
+                parent[u] = p;
+            }
+            if (seen[u] and parent[u] != p) {
+                int ptr = u;
+                cycles[u]++;
+                while (ptr != p) {
+                    ptr = parent[ptr];
+                    cycles[ptr]++;
+                }
+            }
+            for (int v: g[u]) {
+                if (not seen[v]) {
+                    stack.push_back({v, u});
+                }
+            }
+        }
     }
 }
 
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    
+    int t;
     cin >> t;
     for (int test = 0; test < t; test++) {
+        int n, m;
         cin >> n >> m;
-        for (int i = 0; i < n; i++) {
-            g[i].clear();
-            cycles[i] = 0;
-        }
+        vector<set<int>> g(n);
         for (int i = 0; i < m; i++) {
             int u, v;
             cin >> u >> v;
             u--, v--;
-            g[u].push_back(v);
-            g[v].push_back(u);
+            g[u].insert(v);
+            g[v].insert(u);
         }
         
-        if (not contains_cycle(-1)) {
+        if (not contains_cycle(g, n, -1)) {
             cout << "-1\n";
             continue;
         }
 
-        find_cycles();
-
+        vector<int> cycles(n);
+        find_cycles(g, n, cycles);
         int max_cycles = 0;
         for (int i = 0; i < n; i++) {
             max_cycles = max(max_cycles, cycles[i]);
@@ -109,10 +107,9 @@ int main() {
 
         int failure = -1;
         for (int i = 0; i < n; i++) {
-            if (cycles[i] != max_cycles) {
+            if (cycles[i] != max_cycles)
                 continue;
-            }
-            if (not contains_cycle(i)) {
+            if (not contains_cycle(g, n, i)) {
                 failure = i + 1;
                 break;
             }
