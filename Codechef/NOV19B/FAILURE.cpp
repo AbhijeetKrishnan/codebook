@@ -1,11 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <deque>
-#include <set>
 
 using namespace std;
 
-bool contains_cycle(vector<set<int>>& g, int n, int skip) {
+bool contains_cycle(vector<vector<int>>& g, int n, int skip) {
     vector<int> parent(n);
     vector<bool> seen(n, false);
     deque<int> q;
@@ -36,7 +35,7 @@ bool contains_cycle(vector<set<int>>& g, int n, int skip) {
     return false;
 }
 
-void find_cycles(vector<set<int>>& g, int n, vector<int>& cycles) {
+void find_cycles(vector<vector<int>>& g, int n, vector<int>& cycles) {
     vector<int> parent(n);
     vector<bool> seen(n, false);
     fill(cycles.begin(), cycles.end(), 0);
@@ -84,13 +83,13 @@ int main() {
     for (int test = 0; test < t; test++) {
         int n, m;
         cin >> n >> m;
-        vector<set<int>> g(n);
+        vector<vector<int>> g(n);
         for (int i = 0; i < m; i++) {
             int u, v;
             cin >> u >> v;
             u--, v--;
-            g[u].insert(v);
-            g[v].insert(u);
+            g[u].push_back(v);
+            g[v].push_back(u);
         }
         
         if (not contains_cycle(g, n, -1)) {
