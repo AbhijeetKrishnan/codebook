@@ -15,7 +15,9 @@ int colour[LIM];
 bool seen[LIM];
 
 bool contains_cycle(int skip) {
-    fill(seen, seen + n, false);
+    for (int i = 0; i < n; i++) {
+        seen[i] = false;
+    }
     deque<int> q;
     for (int root = 0; root < n; root++) {
         if (seen[root] or root == skip) {
@@ -69,21 +71,21 @@ void dfs(int u, int p) {
 }
 
 void find_cycles() {
-    fill(cycles, cycles + n, 0);
     for (int root = 0; root < n; root++) {
-        if (colour[root] == 2) {
-            continue;
-        }
         dfs(root, root);
     }
 }
 
 int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
     cin >> t;
     for (int test = 0; test < t; test++) {
         cin >> n >> m;
         for (int i = 0; i < n; i++) {
             g[i].clear();
+            cycles[i] = 0;
         }
         for (int i = 0; i < m; i++) {
             int u, v;
