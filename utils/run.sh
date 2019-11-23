@@ -1,8 +1,8 @@
 #!/bin/bash
 
-g++ $1.cpp -o $1.o
-g++ $1_brute.cpp -o brute.o
-g++ $1_gen.cpp -o gen.o
+g++ $PWD/$1.cpp -o $PWD/$1.o
+g++ $PWD/$1_brute.cpp -o $PWD/brute.o
+g++ $PWD/$1_gen.cpp -o $PWD/gen.o
 
 for((i = 1; ; i++)); do
     echo $i
