@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+import json
 import os
 import sys
-import json
 
 import requests
+from ratelimit import RateLimitException, limits, sleep_and_retry
 
+FIVE_MINUTES = 300
 
 
 def to_ext(lang_code):
@@ -25,28 +27,39 @@ class Chef:
         self.access_token = access_token
         self.username = username
 
+    @sleep_and_retry
+    @limits(calls=100, period=FIVE_MINUTES)
     def request(self, url):
         headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self.access_token}"
         }
         r = requests.get(url, headers=headers)
+        print(url, r.text)
+        if r.status_code != 200:
+            raise RateLimitException('API response: {}'.format(r.status_code))
+
         response = r.json()
-        print(url, response)
         return response
 
+    @sleep_and_retry
+    @limits(calls=30, period=FIVE_MINUTES)
     def get_all_self_submissions(self):
         API_URL = "https://api.codechef.com/users/me"
         user_details = self.request(API_URL)
         solved = user_details['result']['data']['content']['problemStats']['solved']
         return solved
 
+    @sleep_and_retry
+    @limits(calls=30, period=FIVE_MINUTES)
     def search_submissions(self, problemCode=None, contestCode=None):
         API_URL = f"https://api.codechef.com/submissions/?result=AC&username={self.username}&problemCode={problemCode}&contestCode={contestCode}&limit=1"
         submission_details = self.request(API_URL)
         submission_id = submission_details['result']['data']['content'][0]['id']
         return submission_id
 
+    @sleep_and_retry
+    @limits(calls=30, period=FIVE_MINUTES)
     def get_submission_code(self, submission_id):
         API_URL = f"https://api.codechef.com/submissions/{submission_id}?fields=code,language"
         result = self.request(API_URL)['result']['data']['content']
