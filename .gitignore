@@ -1,4 +1,4 @@
 **/input
 *.o
 **/test
-generators/client_secret.json
+generators/*_secret.json
