@@ -1,20 +1,20 @@
 # Codebook
 
 Contains my submissions for various algorithmic programming problems across a
-variety of platforms.
+variety of competitive coding platforms.
 
 ## Generators
 
 Contains scripts which can build a codebook by scraping your submissions on a competitive coding platform, given the
-user handle.
+user handle (or API secret).
 
 Scrapers exist for -
 
-- [x] Codeforces
-- [x] CodeChef
-- [ ] AtCoder (API [exists](https://atcoder-api-python.readthedocs.io/en/latest/index.html))
-- [ ] HackerRank (no submission API)
-- [ ] HackerEarth (no submission API)
+- [x] [Codeforces](http://codeforces.com/)
+- [x] [CodeChef](https://www.codechef.com/)
+- [x] [AtCoder](https://atcoder.jp/)
+- [ ] [HackerRank](https://www.hackerrank.com/) (no submission API)
+- [ ] [HackerEarth](https://www.hackerearth.com/) (no submission API)
 
 ### Requirements
 
